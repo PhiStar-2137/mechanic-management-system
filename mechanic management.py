@@ -3,21 +3,26 @@ import datetime
 from decimal import Decimal 
 
 # ------------------- Database Connection -------------------
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="<password>",
-    database="mechanicdb"
-)
-cursor = db.cursor()
+def db_connection():
+    host = input("Enter Host: ").strip()
+    user = input("Enter User: ").strip()
+    password = input("Enter Password: ").strip()
+    
+    db = mysql.connector.connect(
+        host = host,
+        user = user,
+        password = password,
+        database = "mechanicdb"
+    )
+    return (db.cursor() , db)
 
 # ------------------- Utility Functions -------------------
 def line():
-    print("-" * 100)
+    print("-" * 120)
 
 # ------------------- Customer Management -------------------
 def add_customer():
-    print("\n🚗 Add Customer")
+    print("\n ADD CUSTOMER")
     name = input("Enter customer name: ").strip()
     phone = input("Enter phone number: ").strip()
     vehicle_number = input("Enter vehicle number: ").strip()
@@ -26,54 +31,60 @@ def add_customer():
     cursor.execute("""
         INSERT INTO customers (name, phone, vehicle_number, vehicle_model)
         VALUES (%s, %s, %s, %s)
-    """, (name, phone, vehicle_number, vehicle_model))
+        """,
+        (name, phone, vehicle_number, vehicle_model))
+    
     db.commit()
     print(f"✅ Customer '{name}' added successfully!\n")
 
-
 def show_customers():
-    print("\n📋 Customers List:\n")
+    print("\n CUSTOMERS LIST \n")
     cursor.execute("SELECT * FROM customers")
     results = cursor.fetchall()
+    
     if not results:
         print("⚠️ No customers found.\n")
         return
+    
     line()
-    print(f"{'ID':<5}{'Name':<20}{'Phone':<15}{'Vehicle No.':<15}{'Model'}")
+    print(f"{'ID':<5}{'Name':<50}{'Phone':<15}{'Vehicle No.':<15}{'Model':<30}")
+    
     line()
     for row in results:
-        print(f"{row[0]:<5}{row[1]:<20}{row[2]:<15}{row[3]:<15}{row[4]}")
+        print(f"{row[0]:<5}{row[1]:<50}{row[2]:<15}{row[3]:<15}{row[4]:<30}")
     line()
 
 # ------------------- Parts Management -------------------
 def add_part():
-    print("\n🔧 Add Part")
+    print("\n ADD PART")
     name = input("Enter part name: ").strip()
-    price = Decimal(input("Enter price: "))   # ← FIX: using Decimal
+    price = Decimal(input("Enter price: ")) 
     stock = int(input("Enter stock quantity: "))
 
     cursor.execute("""
         INSERT INTO parts (part_name, price, stock)
         VALUES (%s, %s, %s)
-    """, (name, price, stock))
+        """, 
+        (name, price, stock))
     db.commit()
     print(f"✅ Part '{name}' added successfully!\n")
 
-
 def show_parts():
-    print("\n🧾 Parts List:\n")
+    print("\n PARTS LIST \n")
     cursor.execute("SELECT * FROM parts")
     parts = cursor.fetchall()
+    
     if not parts:
         print("⚠️ No parts found.\n")
         return
+    
     line()
-    print(f"{'ID':<5}{'Name':<25}{'Price':<10}{'Stock'}")
+    print(f"{'ID':<5}{'Name':<50}{'Price':<10}{'Stock'}")
     line()
+    
     for p in parts:
-        print(f"{p[0]:<5}{p[1]:<25}{p[2]:<10}{p[3]}")
+        print(f"{p[0]:<5}{p[1]:<50}{p[2]:<10}{p[3]}")
     line()
-
 
 def update_part_stock():
     show_parts()
@@ -85,72 +96,94 @@ def update_part_stock():
 
 # ------------------- Tools Management -------------------
 def add_tool():
-    print("\n🛠️ Add Tool")
+    print("\n ADD TOOL")
     name = input("Enter tool name: ").strip()
     condition = input("Enter condition (Good/Damaged): ").strip()
-    cursor.execute("INSERT INTO tools (tool_name, condition_status) VALUES (%s, %s)", (name, condition))
+    
+    cursor.execute("""
+        INSERT INTO tools (tool_name, condition_status) 
+        VALUES (%s, %s)
+        """, 
+        (name, condition))
+    
     db.commit()
     print("✅ Tool added successfully!\n")
 
-
 def show_tools():
-    print("\n🔩 Tools List:\n")
+    print("\n TOOLS LIST \n")
     cursor.execute("SELECT * FROM tools")
     tools = cursor.fetchall()
+    
     if not tools:
         print("⚠️ No tools found.\n")
         return
+    
     line()
-    print(f"{'ID':<5}{'Tool Name':<25}{'Condition'}")
+    print(f"{'ID':<5}{'Tool Name':<50}{'Condition'}")
     line()
+    
     for t in tools:
-        print(f"{t[0]:<5}{t[1]:<25}{t[2]}")
+        print(f"{t[0]:<5}{t[1]:<50}{t[2]}")
     line()
 
 # ------------------- Work Management -------------------
 def add_work():
     show_customers()
+    print("\n ADD WORK")
     cust_id = input("Enter customer ID: ")
     desc = input("Enter work description: ")
     labour = Decimal(input("Enter labour charge: "))  # FIXED
 
-    cursor.execute("INSERT INTO works (customer_id, description, labour_charge, status) VALUES (%s,%s,%s,'Pending')",
-                   (cust_id, desc, labour))
+    cursor.execute("""
+        INSERT INTO works (customer_id, description, labour_charge, status) 
+        VALUES (%s,%s,%s,'Pending')
+        """,
+        (cust_id, desc, labour))
+    
     db.commit()
     print("✅ Work added successfully!\n")
 
-
 def assign_part_to_work():
     show_parts()
+    show_works()
+    print("\n ASSIGN PART TO WORK")
     work_id = input("Enter work ID: ")
     part_id = input("Enter part ID: ")
     qty = int(input("Enter quantity used: "))
 
-    cursor.execute("INSERT INTO work_parts (work_id, part_id, quantity) VALUES (%s, %s, %s)", (work_id, part_id, qty))
+    cursor.execute("""
+        INSERT INTO work_parts (work_id, part_id, quantity) 
+        VALUES (%s, %s, %s)
+        """, 
+        (work_id, part_id, qty))
+    
     db.commit()
     print("✅ Part assigned successfully.\n")
 
-
 def show_works():
-    print("\n🧾 Works:\n")
+    print("\n WORKS \n")
     cursor.execute("SELECT * FROM works")
     works = cursor.fetchall()
+    
     if not works:
         print("⚠️ No works found.\n")
         return
+    
     line()
-    print(f"{'ID':<5}{'CustID':<8}{'Description':<30}{'Status':<12}{'Labour(₹)':<10}")
+    print(f"{'ID':<5}{'CustID':<10}{'Description':<75}{'Status':<15}{'Labour(₹)':<10}")
     line()
+    
     for w in works:
-        print(f"{w[0]:<5}{w[1]:<8}{w[2]:<30}{w[4]:<12}{w[3]:<10}")
+        print(f"{w[0]:<5}{w[1]:<10}{w[2]:<75}{w[4]:<15}{w[3]:<10}")
     line()
 
-# ------------------- Billing (FIXED VERSION) -------------------
+# ------------------- Billing -------------------
 def complete_work_and_generate_bill():
     show_works()
+    print("\n BILL GENERATION")
     work_id = input("Enter work ID: ")
 
-    gst_rate = Decimal(input("Enter GST rate (%): "))  # FIX
+    gst_rate = Decimal(input("Enter GST rate (%): "))
 
     cursor.execute("SELECT labour_charge FROM works WHERE work_id=%s", (work_id,))
     labour = cursor.fetchone()[0]
@@ -160,15 +193,16 @@ def complete_work_and_generate_bill():
         FROM work_parts wp
         JOIN parts p ON wp.part_id = p.part_id
         WHERE wp.work_id = %s
-    """, (work_id,))
+        """, (work_id,))
     parts_used = cursor.fetchall()
 
     subtotal = labour + sum(price * qty for price, qty in parts_used)
     gst = subtotal * gst_rate / Decimal(100)
     total = subtotal + gst
+    today = datetime.datetime.now().date()
 
-    cursor.execute("INSERT INTO bills (work_id, subtotal, gst, total) VALUES (%s, %s, %s, %s)",
-                   (work_id, subtotal, gst, total))
+    cursor.execute("INSERT INTO bills (work_id, subtotal, gst, total, date) VALUES (%s, %s, %s, %s, %s)",
+                   (work_id, subtotal, gst, total, today))
     db.commit()
 
     cursor.execute("UPDATE works SET status='Completed' WHERE work_id=%s", (work_id,))
@@ -178,7 +212,7 @@ def complete_work_and_generate_bill():
 
 # ------------------- Extra Features -------------------
 def check_tire_pressure():
-    print("\n🚗 Tire Pressure Checker (Indian Cars)")
+    print("\n TIRE PRESSURE CHECKER")
     print("Select your car model:\n")
 
     cars = {
@@ -208,7 +242,7 @@ def check_tire_pressure():
     car_name, ideal = cars[choice]
     current = float(input(f"Enter current tire pressure for {car_name}: "))
 
-    print("\n📊 RESULT:")
+    print("\n RESULT \n")
     print(f"Car: {car_name}")
     print(f"Ideal Pressure: {ideal} PSI")
     print(f"Current Pressure: {current} PSI\n")
@@ -219,7 +253,6 @@ def check_tire_pressure():
         print("⚠️ High tire pressure — release some air.")
     else:
         print("✅ Perfect! Tyre pressure is ideal.")
-
 
 def show_mechanic_manual():
     print("""
@@ -235,7 +268,8 @@ def show_mechanic_manual():
 
 # ------------------- Nearby Shops -------------------
 def add_nearby_shop():
-    print("\n🏪 Add Nearby Parts Shop")
+    show_parts()
+    print("\n ADD NEARBY PARTS SHOP")
     shop_name = input("Enter shop name: ").strip()
     address = input("Enter shop address: ").strip()
     phone = input("Enter phone number: ").strip()
@@ -244,26 +278,34 @@ def add_nearby_shop():
     cursor.execute("""
         INSERT INTO nearby_shops (shop_name, address, phone, parts_available)
         VALUES (%s, %s, %s, %s)
-    """, (shop_name, address, phone, parts_available))
+        """, 
+        (shop_name, address, phone, parts_available))
+    
     db.commit()
     print(f"✅ Shop '{shop_name}' added successfully!\n")
 
 
 def show_nearby_shops():
-    print("\n📍 Nearby Parts Shops:\n")
+    print("\n NEARBY SHOPS \n")
     cursor.execute("SELECT * FROM nearby_shops")
     shops = cursor.fetchall()
+    
     if not shops:
         print("⚠️ No nearby shops found.\n")
         return
+    
     line()
-    print(f"{'ID':<5}{'Shop Name':<25}{'Phone':<15}{'Parts Available':<30}{'Address'}")
+    print(f"{'ID':<5}{'Shop Name':<25}{'Phone':<15}{'Parts Available':<30}{'Address':<40}")
     line()
+    
     for s in shops:
-        print(f"{s[0]:<5}{s[1]:<25}{s[3]:<15}{s[4]:<30}{s[2]}")
+        print(f"{s[0]:<5}{s[1]:<25}{s[3]:<15}{s[4]:<30}{s[2]:<40}")
     line()
 
 # ------------------- Main Menu -------------------
+print("===ESTABLISH DATABASE CONNECTION===")
+cursor , db = db_connection()
+
 def main_menu():
     while True:
         print("""
